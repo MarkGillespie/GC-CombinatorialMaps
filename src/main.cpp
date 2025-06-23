@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::string tetFilename = "../../meshes/TetMeshes/bunny_small.1.ele";
+    std::string tetFilename = "../data/bunny_small.1.ele";
     // Make sure a mesh name was given
     if (inputFilename) {
         tetFilename = args::get(inputFilename);
