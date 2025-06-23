@@ -1,7 +1,8 @@
-# GeometryTemplate
-A template project to get started with geometry-central and Polyscope. Copied from Nick's template [here](https://github.com/nmwsharp/gc-polyscope-project-template), but with code for googletest added in.
+# Geometry Central Combinatorial Maps
 
-This repo is set up as a template, but it seems the submodules don't get copied to the new project. Run `setup.sh` to set up the required submodules and to run cmake. Setup also sets up cmake to export compile commands for `clang-format`. To build the code, you can run
+Loads a tet mesh using an experimental geometry-central implementation of the combinatorial map data structure. See the CGAL docs for more [details on the data structure](https://doc.cgal.org/latest/Combinatorial_map/index.html). It has not yet made its way into the library itself, but the implementation can be found [here](https://github.com/MarkGillespie/geometry-central/tree/CombinatorialMaps/include/geometrycentral/combinatorial-maps).
+
+To build the code, you can run
 ```
 cd build
 make -j7
@@ -9,10 +10,5 @@ make -j7
 
 Then run the code with
 ```
-bin/run /path/to/a/mesh
-```
-
-Run the tests with
-```
-bin/test
+bin/run ../data/bunny_small.1.ele
 ```

@@ -5,7 +5,7 @@
 
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
-#include "polyscope/tet_mesh.h"
+#include "polyscope/volume_mesh.h"
 
 #include "args/args.hxx"
 #include "imgui.h"
@@ -17,12 +17,8 @@ using std::cout;
 using std::endl;
 using std::string;
 
-// == Geometry-central data
-std::unique_ptr<HalfedgeMesh> mesh;
-std::unique_ptr<VertexPositionGeometry> geometry;
-
 // Polyscope visualization handle, to quickly add data to the surface
-polyscope::SurfaceMesh* psMesh;
+polyscope::VolumeMesh* psMesh;
 
 // A user-defined callback, for creating control panels (etc)
 // Use ImGUI commands to build whatever you want here, see
@@ -32,7 +28,7 @@ void myCallback() {}
 int main(int argc, char** argv) {
 
     // Configure the argument parser
-    args::ArgumentParser parser("Geometry program");
+    args::ArgumentParser parser("Combinatorial map visualizer");
     args::Positional<std::string> inputFilename(parser, "mesh",
                                                 "Mesh to be processed.");
 
@@ -48,11 +44,10 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::string filename    = "../../meshes/bunny_small.obj";
     std::string tetFilename = "../../meshes/TetMeshes/bunny_small.1.ele";
     // Make sure a mesh name was given
     if (inputFilename) {
-        filename = args::get(inputFilename);
+        tetFilename = args::get(inputFilename);
     }
 
     std::vector<Vector3> tetVertices;
@@ -62,9 +57,6 @@ int main(int argc, char** argv) {
         tetFilename.substr(0, tetFilename.find_last_of(".")) + ".ele";
     string nodePath =
         tetFilename.substr(0, tetFilename.find_last_of(".")) + ".node";
-    string neighPath =
-        tetFilename.substr(0, tetFilename.find_last_of(".")) + ".neigh";
-
 
     std::ifstream node(nodePath);
     if (node.is_open()) {
@@ -112,18 +104,13 @@ int main(int argc, char** argv) {
     // Set the callback function
     polyscope::state::userCallback = myCallback;
 
-    polyscope::registerTetMesh("bunny", tetVertices, tm.getCellVertexList<3>());
-
-    // Load mesh
-    std::tie(mesh, geometry) = loadMesh(filename);
-    std::cout << "Genus: " << mesh->genus() << std::endl;
-
-    combinatorial_map::CombinatorialMap<2> cm(mesh->getFaceVertexList());
-
-    // // Register the mesh with polyscope
-    psMesh = polyscope::registerSurfaceMesh(
-        "bunny surface mesh", geometry->inputVertexPositions,
-        cm.getCellVertexList<2>(), polyscopePermutations(*mesh));
+    psMesh = polyscope::registerTetMesh("bunny", tetVertices,
+                                        tm.getCellVertexList<3>());
+    // Add a slice plane
+    polyscope::SlicePlane* psPlane = polyscope::addSceneSlicePlane();
+    psPlane->setPose(glm::vec3{-1., 0., 0.}, glm::vec3{0.25, 0., -1.});
+    psPlane->setDrawPlane(false); // render the semi-transparent gridded plane
+    psPlane->setDrawWidget(true);
 
     // Give control to the polyscope gui
     polyscope::show();
