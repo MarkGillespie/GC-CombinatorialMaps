@@ -16,6 +16,9 @@ using TetMesh = CombinatorialMap<3>;
 template <size_t D, typename T>
 using TetData = CellData<3, D, T>;
 
+template <size_t D>
+using Tet = Cell<3, D>;
+
 using std::cout;
 using std::endl;
 using std::string;
@@ -93,15 +96,18 @@ int main(int argc, char** argv) {
             // subtract 1 since tetgen is 1-indexed
             // reorder vertices since tetgen uses the opposite orientation
             // convention
-            tets.emplace_back(std::array<size_t, 4>{b - 1, a - 1, c - 1, d - 1});
+            tets.emplace_back(
+                std::array<size_t, 4>{b - 1, a - 1, c - 1, d - 1});
         }
 
         ele.close();
     }
 
     TetMesh tetMesh(tets); // construct tet mesh
-    VertexData<3, Vector3> vertexPositions(tetMesh); // copy vertex positions into a VertexData
-    for (size_t i=0; i < tetMesh.nVertices(); i++) vertexPositions[i]=tetVertices[i];
+    VertexData<3, Vector3> vertexPositions(
+        tetMesh); // copy vertex positions into a VertexData
+    for (size_t i = 0; i < tetMesh.nVertices(); i++)
+        vertexPositions[i] = tetVertices[i];
 
     // Initialize polyscope
     polyscope::init();
@@ -111,10 +117,30 @@ int main(int argc, char** argv) {
 
     psMesh = polyscope::registerTetMesh("bunny", vertexPositions,
                                         tetMesh.getCellVertexList<3>());
+
     // Define and register a vertex quantity
     VertexData<3, double> f(tetMesh);
-    for (Vertex<3> i : tetMesh.vertices()){f[i]= vertexPositions[i].x * sin(vertexPositions[i].y);}
-    psMesh->addVertexScalarQuantity("f", f);
+    for (Vertex<3> i : tetMesh.vertices()) {
+        f[i] = vertexPositions[i].x * sin(vertexPositions[i].y);
+    }
+    psMesh->addVertexScalarQuantity("vertex quantity", f);
+
+    std::cout << "# 3-cells: " << tetMesh.nCells<3>() << std::endl;
+    std::cout << "3-cell capacity: " << tetMesh.nCellsCapacity<3>()
+              << std::endl;
+    std::cout << "tet list length: " << tets.size() << std::endl;
+
+    // Define and register a tet quantity
+    TetData<3, double> g(tetMesh);
+    for (Tet<3> t : tetMesh.cells<3>()) {
+        Vector3 center = Vector3::zero();
+        for (Vertex<3> i : t.adjacentVertices()) {
+            center += vertexPositions[i];
+        }
+        center /= 4;
+        g[t] = center.z;
+    }
+    psMesh->addCellScalarQuantity("tet quantity", g);
 
 
     // Add a slice plane
