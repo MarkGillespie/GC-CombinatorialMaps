@@ -6,9 +6,12 @@ Loads a tet mesh using an experimental geometry-central implementation of the co
 
 To build the code, you can run
 ```
+mkdir build
 cd build
+cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
 make -j7
 ```
+(after the first time, running `make -j7` will suffice).
 
 Then run the code with
 ```

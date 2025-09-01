@@ -125,10 +125,10 @@ int main(int argc, char** argv) {
     }
     psMesh->addVertexScalarQuantity("vertex quantity", f);
 
+    std::cout << "# vertices: " << tetMesh.nVertices() << std::endl;
+    std::cout << "# edges: " << tetMesh.nEdges() << std::endl;
+    std::cout << "# faces: " << tetMesh.nFaces() << std::endl;
     std::cout << "# 3-cells: " << tetMesh.nCells<3>() << std::endl;
-    std::cout << "3-cell capacity: " << tetMesh.nCellsCapacity<3>()
-              << std::endl;
-    std::cout << "tet list length: " << tets.size() << std::endl;
 
     // Define and register a tet quantity
     TetData<3, double> g(tetMesh);
