@@ -1,7 +1,5 @@
 #include "geometrycentral/combinatorial-maps/combinatorial_map.h"
-#include "geometrycentral/surface/halfedge_mesh.h"
-#include "geometrycentral/surface/meshio.h"
-#include "geometrycentral/surface/vertex_position_geometry.h"
+#include "geometrycentral/utilities/vector3.h"
 
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
@@ -11,7 +9,12 @@
 #include "imgui.h"
 
 using namespace geometrycentral;
-using namespace geometrycentral::surface;
+using namespace geometrycentral::combinatorial_map;
+
+using TetMesh = CombinatorialMap<3>;
+
+template <size_t D, typename T>
+using TetData = CellData<3, D, T>;
 
 using std::cout;
 using std::endl;
@@ -51,7 +54,7 @@ int main(int argc, char** argv) {
     }
 
     std::vector<Vector3> tetVertices;
-    std::vector<std::vector<size_t>> tets;
+    std::vector<std::array<size_t, 4>> tets;
 
     string elePath =
         tetFilename.substr(0, tetFilename.find_last_of(".")) + ".ele";
@@ -90,13 +93,15 @@ int main(int argc, char** argv) {
             // subtract 1 since tetgen is 1-indexed
             // reorder vertices since tetgen uses the opposite orientation
             // convention
-            tets.emplace_back(std::vector<size_t>{b - 1, a - 1, c - 1, d - 1});
+            tets.emplace_back(std::array<size_t, 4>{b - 1, a - 1, c - 1, d - 1});
         }
 
         ele.close();
     }
 
-    combinatorial_map::CombinatorialMap<3> tm(tets);
+    TetMesh tetMesh(tets); // construct tet mesh
+    VertexData<3, Vector3> vertexPositions(tetMesh); // copy vertex positions into a VertexData
+    for (size_t i=0; i < tetMesh.nVertices(); i++) vertexPositions[i]=tetVertices[i];
 
     // Initialize polyscope
     polyscope::init();
@@ -104,8 +109,14 @@ int main(int argc, char** argv) {
     // Set the callback function
     polyscope::state::userCallback = myCallback;
 
-    psMesh = polyscope::registerTetMesh("bunny", tetVertices,
-                                        tm.getCellVertexList<3>());
+    psMesh = polyscope::registerTetMesh("bunny", vertexPositions,
+                                        tetMesh.getCellVertexList<3>());
+    // Define and register a vertex quantity
+    VertexData<3, double> f(tetMesh);
+    for (Vertex<3> i : tetMesh.vertices()){f[i]= vertexPositions[i].x * sin(vertexPositions[i].y);}
+    psMesh->addVertexScalarQuantity("f", f);
+
+
     // Add a slice plane
     polyscope::SlicePlane* psPlane = polyscope::addSceneSlicePlane();
     psPlane->setPose(glm::vec3{-1., 0., 0.}, glm::vec3{0.25, 0., -1.});
