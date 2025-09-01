@@ -142,6 +142,8 @@ int main(int argc, char** argv) {
     }
     psMesh->addCellScalarQuantity("tet quantity", g);
 
+    // EdgeData<3, T> and FaceData<3, T> are supported, but polyscope can't draw
+    // them yet
 
     // Add a slice plane
     polyscope::SlicePlane* psPlane = polyscope::addSceneSlicePlane();
