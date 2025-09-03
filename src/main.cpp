@@ -1,8 +1,8 @@
 #include "geometrycentral/combinatorial-maps/combinatorial_map.h"
 #include "geometrycentral/utilities/vector3.h"
 
+#include "polyscope/point_cloud.h"
 #include "polyscope/polyscope.h"
-#include "polyscope/surface_mesh.h"
 #include "polyscope/volume_mesh.h"
 
 #include "args/args.hxx"
@@ -144,6 +144,39 @@ int main(int argc, char** argv) {
 
     // EdgeData<3, T> and FaceData<3, T> are supported, but polyscope can't draw
     // them yet
+
+    if (true) { // pick out boundary elements
+        std::vector<Vector3> boundaryVertices, boundaryEdges, boundaryFaces,
+            boundaryTets;
+        for (Vertex<3> i : tetMesh.vertices()) {
+            if (i.isBoundary()) boundaryVertices.push_back(vertexPositions[i]);
+        }
+        for (Edge<3> ij : tetMesh.edges()) {
+            if (ij.isBoundary()) {
+                Vector3 center = Vector3::zero();
+                for (Vertex<3> i : ij.adjacentVertices())
+                    center += vertexPositions[i];
+                center /= 2.;
+                boundaryEdges.push_back(center);
+            }
+        }
+        for (Face<3> ijk : tetMesh.faces()) {
+            if (ijk.isBoundary()) {
+                Vector3 center = Vector3::zero();
+                for (Vertex<3> i : ijk.adjacentVertices())
+                    center += vertexPositions[i];
+                center /= 3.;
+                boundaryFaces.push_back(center);
+            }
+        }
+
+        polyscope::registerPointCloud("boundary vertices", boundaryVertices)
+            ->setEnabled(false);
+        polyscope::registerPointCloud("boundary edges", boundaryEdges)
+            ->setEnabled(false);
+        polyscope::registerPointCloud("boundary faces", boundaryFaces)
+            ->setEnabled(false);
+    }
 
     // Add a slice plane
     polyscope::SlicePlane* psPlane = polyscope::addSceneSlicePlane();
